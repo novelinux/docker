@@ -16,7 +16,10 @@ RUN yum install -y wget \
     && yum install -y libmcrypt-devel \
     && yum install -y zlib-devel pcre-devel
 
-RUN groupadd -r work && useradd -r -g work work
+RUN groupadd -r work \
+    && useradd -r -g work work \
+    && mkdir -p /home/work \
+    && chown work:work /home/work
 USER work
 RUN mkdir -p $HOME/bin \
     && mkdir -p $HOME/.ssh \
