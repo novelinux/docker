@@ -7,20 +7,25 @@ RUN yum install -y wget \
     && service mysqld start \
     && yum install -y mysql-devel \
     && ln -s /usr/lib64/mysql/libmysqlclient.so.20.3.9 /usr/lib/libmysqlclient.so \
-    && yum install -y git \
+    && yum install -y git emacs vim \
     && yum install -y gcc gcc-c++ \
     && yum install -y libxml2-devel \
     && yum install -y openssl-devel \
     && yum install -y curl-devel \
     && yum install -y epel-release \
     && yum install -y libmcrypt-devel \
-    && yum install -y zlib-devel pcre-devel
+    && yum install -y zlib-devel pcre-devel \
+    && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.7/gosu-amd64" \
+    && chmod +x /usr/local/bin/gosu \
+    && gosu nobody true
 
 RUN groupadd -r work \
     && useradd -r -g work work \
     && mkdir -p /home/work \
     && chown work:work /home/work
+
 USER work
+
 RUN mkdir -p $HOME/bin \
     && mkdir -p $HOME/.ssh \
     && mkdir -p $HOME/workspace \
@@ -52,6 +57,19 @@ RUN mkdir -p $HOME/bin \
     && cd nginx-1.13.12 \
     && ./configure --prefix=$HOME/bin/nginx --sbin-path=$HOME/bin/nginx/nginx --conf-path=$HOME/bin/nginx/nginx.conf --user=work --group=work --with-pcre --with-http_gzip_static_module --with-http_stub_status_module --with-http_ssl_module --with-file-aio --with-http_realip_module \
     && make -j4 \
-    && make install \
-    && mkdir -p $HOME/data/logs/nginx \
+    && make install
+
+RUN mkdir -p $HOME/data/logs/nginx \
     && mkdir -p $HOME/data/logs/phplog \
+    && cd $HOME/workspace \
+    && git clone http://v9.git.n.xiaomi.com/liminghao/openplatform-configs.git \
+    && cd openplatform-configs/ \
+    && git pull --rebase \
+    && cp bash/.bashrc $HOME/ \
+    && cp bash/.gitconfig $HOME/ \
+    && cp emacs/.emacs $HOME/ \
+    && cp -rf emacs/.emacs.d/ $HOME/ \
+    && cp php/nginx/nginx.conf $HOME/bin/nginx/nginx.conf \
+    && cp php/php5/php-fpm.conf $HOME/bin/php/etc/php-fpm.conf \
+    && cp php/php5/php.ini $HOME/bin/php/lib/php.ini \
+    && cp php/*.sh $HOME/bin/
