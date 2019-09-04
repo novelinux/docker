@@ -1,6 +1,8 @@
 FROM centos:6
 
-RUN yum install -y wget \
+RUN yum -y update \
+    && yum -y groupinstall "Development Tools" \
+    && yum install -y wget \
     && wget https://dev.mysql.com/get/mysql57-community-release-el6-11.noarch.rpm \
     && yum localinstall -y mysql57-community-release-el6-11.noarch.rpm \
     && yum install -y mysql-community-server \
@@ -14,10 +16,49 @@ RUN yum install -y wget \
     && yum install -y curl-devel \
     && yum install -y epel-release \
     && yum install -y libmcrypt-devel \
-    && yum install -y zlib-devel pcre-devel \
+    && yum install -y zlib-devel libevent-devel pcre-devel \
     && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.7/gosu-amd64" \
     && chmod +x /usr/local/bin/gosu \
-    && gosu nobody true
+    && gosu nobody true \
+    && cd /root \
+    && wget http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz \
+    && tar -xvf autoconf-2.69.tar.gz \
+    && cd autoconf-2.69 \
+    && ./configure --prefix=/usr \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -r autoconf-2.69* \
+    && wget http://ftp.gnu.org/gnu/automake/automake-1.14.tar.gz \
+    && tar xvf automake-1.14.tar.gz \
+    && cd automake-1.14 \
+    && ./configure --prefix=/usr \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -r automake-1.14* \
+    && wget http://ftp.gnu.org/gnu/bison/bison-2.5.1.tar.gz \
+    && tar xvf bison-2.5.1.tar.gz \
+    && cd bison-2.5.1 \
+    && ./configure --prefix=/usr \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -r bison-2.5.1* \
+    && wget http://sourceforge.net/projects/boost/files/boost/1.53.0/boost_1_53_0.tar.gz \
+    && tar xvf boost_1_53_0.tar.gz \
+    && cd boost_1_53_0 \
+    && ./bootstrap.sh \
+    && ./b2 install \
+    && cd .. \
+    && rm -r boost_1_53_0* \
+    && git clone https://github.com/apache/thrift.git \
+    && cd thrift \
+    && git checkout -b 0.11.0 -t origin/0.11.0 \
+    && ./bootstrap.sh \
+    && ./configure --with-lua=no \
+    && make \
+    && make install \
 
 RUN groupadd -r work \
     && useradd -r -g work work \
@@ -57,7 +98,9 @@ RUN mkdir -p $HOME/bin \
     && cd nginx-1.13.12 \
     && ./configure --prefix=$HOME/bin/nginx --sbin-path=$HOME/bin/nginx/nginx --conf-path=$HOME/bin/nginx/nginx.conf --user=work --group=work --with-pcre --with-http_gzip_static_module --with-http_stub_status_module --with-http_ssl_module --with-file-aio --with-http_realip_module \
     && make -j4 \
-    && make install
+    && make install \
+    && cd $HOME/workspace \
+
 
 RUN mkdir -p $HOME/data/logs/nginx \
     && mkdir -p $HOME/data/logs/phplog \
